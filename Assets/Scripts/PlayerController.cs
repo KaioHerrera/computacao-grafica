@@ -10,7 +10,7 @@ public class PlayerController : MonoBehaviour
 
     private Rigidbody rb;
     private float lateralInput;
-    private float verticalInput; 
+    private float verticalInput;
     private float currentForwardSpeed;
     private bool isSlowed = false;
     private float slowTimer = 0f;
@@ -31,14 +31,12 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        Debug.Log("PlayerController ativo! posição atual: " + transform.position);
-        
-        lateralInput = Input.GetAxis("Horizontal"); 
-        
-        verticalInput = Input.GetAxis("Vertical"); 
+        lateralInput = Input.GetAxis("Horizontal");
+        verticalInput = Input.GetAxis("Vertical");
 
-        if (animator) animator.SetFloat("Speed", Mathf.Abs(verticalInput * currentForwardSpeed));
-        
+        if (animator)
+            animator.SetFloat("Speed", Mathf.Abs(verticalInput * currentForwardSpeed));
+
         if (isSlowed)
         {
             slowTimer -= Time.deltaTime;
@@ -52,11 +50,25 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
-        Vector3 forwardMove = Vector3.forward * verticalInput * currentForwardSpeed * Time.fixedDeltaTime;
-        
-        Vector3 lateralMove = transform.right * lateralInput * lateralSpeed * Time.fixedDeltaTime;
-        
+        Vector3 cameraForward = Camera.main.transform.forward;
+        cameraForward.y = 0f;
+        cameraForward.Normalize();
+
+        Vector3 cameraRight = Camera.main.transform.right;
+        cameraRight.y = 0f;
+        cameraRight.Normalize();
+
+        Vector3 forwardMove = cameraForward * verticalInput * currentForwardSpeed * Time.fixedDeltaTime;
+        Vector3 lateralMove = cameraRight * lateralInput * lateralSpeed * Time.fixedDeltaTime;
+
         rb.MovePosition(rb.position + forwardMove + lateralMove);
+
+        Vector3 moveDirection = forwardMove + lateralMove;
+        if (moveDirection != Vector3.zero)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
+            rb.rotation = Quaternion.Slerp(rb.rotation, targetRotation, Time.fixedDeltaTime * 10f);
+        }
     }
 
     private void OnTriggerEnter(Collider other)
